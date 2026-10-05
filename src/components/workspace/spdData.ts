@@ -110,7 +110,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "din-rail",
     label: "DIN Rail Clip",
-    position: [1.35, 0.45, -0.99],
+    position: [0, -1.39, -0.63],
     title: "DIN Rail Clip",
     summary:
       "Spring-loaded clip on the rear of the module that snaps onto a standard 35 mm DIN rail inside the distribution board.",

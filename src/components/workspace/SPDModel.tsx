@@ -194,6 +194,8 @@ type Draw = (
 ) => void;
 
 const PX_PER_MM = 26;
+/** How far (mm) a decal must sit in front of a label to stay on top of the label's polygon offset. */
+const LABEL_CLEARANCE = 0.3;
 const font = (weight: number, size: number) =>
   `${weight} ${size}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
 
@@ -502,7 +504,9 @@ function Label({
 function Screw({ x, y, active }: { x: number; y: number; active: boolean }) {
   return (
     <group position={[mm(x), mm(y), mm(Z_SHOULDER)]}>
-      <mesh position={[0, 0, mm(0.06)]}>
+      {/* Held well clear of the shoulder label: its polygon offset otherwise drew the
+          label's taupe patch over the N well at oblique angles. */}
+      <mesh position={[0, 0, mm(LABEL_CLEARANCE)]}>
         <circleGeometry args={[mm(4.4), 40]} />
         <meshStandardMaterial color={COLOR.hole} roughness={0.9} />
       </mesh>
@@ -959,7 +963,7 @@ export function SPDModel({ activeHotspot, onHotspot, exploded, surging }: Props)
         {/* Blank recess under the L pole (no terminal), and the rivet between the poles. */}
         <mesh
           geometry={recessGeometry}
-          position={[mm(X_L), mm(-Y_TERMINAL), mm(Z_SHOULDER + 0.06)]}
+          position={[mm(X_L), mm(-Y_TERMINAL), mm(Z_SHOULDER + LABEL_CLEARANCE)]}
         >
           <meshStandardMaterial color={COLOR.recess} roughness={0.8} />
         </mesh>
@@ -982,6 +986,8 @@ export function SPDModel({ activeHotspot, onHotspot, exploded, surging }: Props)
             <planeGeometry args={[mm(5), mm(1.4)]} />
             <meshStandardMaterial color={COLOR.hole} roughness={1} />
           </mesh>
+          {/* The hotspot is the clip, so its pin sits on the latch rather than on bare rail. */}
+          <Pin id="din-rail" active={railActive} onHotspot={onHotspot} />
         </group>
 
         <Pin id="body" active={activeHotspot === "body"} onHotspot={onHotspot} />
@@ -1021,7 +1027,6 @@ export function SPDModel({ activeHotspot, onHotspot, exploded, surging }: Props)
             <meshStandardMaterial color="#2a2c30" roughness={0.9} />
           </mesh>
         ))}
-        <Pin id="din-rail" active={railActive} onHotspot={onHotspot} />
       </group>
 
       {/* ---------------- Surge simulation ---------------- */}

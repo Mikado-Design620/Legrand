@@ -17,6 +17,7 @@ type Props = {
 };
 
 const CAMERA_FOV = 35;
+const MAX_DISTANCE = 12;
 const VIEW_DIR = new Vector3(3, 1.5, 4.5).normalize();
 /** A little in front of the module, so pulled-out cartridges stay in frame too. */
 const VIEW_TARGET = new Vector3(0, -0.05, 0.2);
@@ -25,27 +26,41 @@ const VIEW_TARGET = new Vector3(0, -0.05, 0.2);
  * Pull the camera back until the whole module fits this panel. The viewer runs
  * from a narrow column on laptops to a wide one on big screens, and a fixed
  * distance cropped the module in the narrow case. Recenter returns here.
+ *
+ * The camera is placed once; a later resize only moves the Recenter pose, so it
+ * never throws away the view the user has orbited to.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function FrameModel({ controlsRef }: { controlsRef: RefObject<any> }) {
   const camera = useThree((s) => s.camera);
   const width = useThree((s) => s.size.width);
   const height = useThree((s) => s.size.height);
+  const placed = useRef(false);
 
   useEffect(() => {
-    if (!width || !height) return;
+    const controls = controlsRef.current;
+    if (!width || !height || !controls) return;
     const tanHalf = Math.tan(MathUtils.degToRad(CAMERA_FOV / 2));
     const fitHeight = 1.8 / tanHalf;
     // wide enough for the cartridges once they are pulled out (Explode)
     const fitWidth = 1.65 / (tanHalf * (width / height));
-    camera.position.copy(VIEW_DIR).multiplyScalar(Math.max(fitHeight, fitWidth)).add(VIEW_TARGET);
-    camera.lookAt(VIEW_TARGET);
-    const controls = controlsRef.current;
-    if (controls) {
-      controls.target.copy(VIEW_TARGET);
-      controls.update();
-      controls.saveState();
+    const distance = Math.max(fitHeight, fitWidth);
+    const home = VIEW_DIR.clone().multiplyScalar(distance).add(VIEW_TARGET);
+
+    // A tall, narrow panel needs more than the default zoom-out limit to fit.
+    controls.maxDistance = Math.max(MAX_DISTANCE, distance * 1.3);
+
+    if (placed.current) {
+      controls.position0.copy(home);
+      controls.target0.copy(VIEW_TARGET);
+      return;
     }
+    camera.position.copy(home);
+    camera.lookAt(VIEW_TARGET);
+    controls.target.copy(VIEW_TARGET);
+    controls.update();
+    controls.saveState();
+    placed.current = true;
   }, [camera, width, height, controlsRef]);
 
   return null;
@@ -142,7 +157,7 @@ export function ProductViewer({
           autoRotateSpeed={1.2}
           enablePan={true}
           minDistance={1.8}
-          maxDistance={12}
+          maxDistance={MAX_DISTANCE}
           target={VIEW_TARGET}
         />
         <FrameModel controlsRef={controlsRef} />
