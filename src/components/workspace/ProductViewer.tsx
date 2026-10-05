@@ -1,8 +1,9 @@
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, OrbitControls, Environment, ContactShadows } from "@react-three/drei";
-import { Component, Suspense, useEffect, useRef, type ReactNode } from "react";
-import { Group, MathUtils } from "three";
-import { HOTSPOTS, type HotspotId } from "./spdData";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls, Environment, ContactShadows, Lightformer } from "@react-three/drei";
+import { Suspense, useEffect, useRef, type RefObject } from "react";
+import { MathUtils, Vector3 } from "three";
+import { type HotspotId } from "./spdData";
+import { SPDModel, SPD_FLOOR_Y } from "./SPDModel";
 import { RotateCw, Maximize2, Layers, Zap } from "lucide-react";
 
 type Props = {
@@ -15,225 +16,39 @@ type Props = {
   onSurge?: () => void;
 };
 
+const CAMERA_FOV = 35;
+const VIEW_DIR = new Vector3(3, 1.5, 4.5).normalize();
+/** A little in front of the module, so pulled-out cartridges stay in frame too. */
+const VIEW_TARGET = new Vector3(0, -0.05, 0.2);
+
 /**
- * The studio lighting map is an HDR file fetched from a public CDN at runtime. If that
- * request fails (offline, or a corporate firewall blocks the CDN) the 3D scene must still
- * render with its plain lights instead of taking the whole page down.
+ * Pull the camera back until the whole module fits this panel. The viewer runs
+ * from a narrow column on laptops to a wide one on big screens, and a fixed
+ * distance cropped the module in the narrow case. Recenter returns here.
  */
-class LightingBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function FrameModel({ controlsRef }: { controlsRef: RefObject<any> }) {
+  const camera = useThree((s) => s.camera);
+  const width = useThree((s) => s.size.width);
+  const height = useThree((s) => s.size.height);
 
-function SPDModel({ activeHotspot, onHotspot, exploded, surging }: Omit<Props, "autoRotate">) {
-  const groupRef = useRef<Group>(null);
-  const plugRef = useRef<Group>(null);
-  const bodyRef = useRef<Group>(null);
-  const dinRef = useRef<Group>(null);
-  const surgeRef = useRef<Group>(null);
-
-  useFrame((_, dt) => {
-    if (plugRef.current) {
-      const target = exploded ? 0.9 : 0;
-      plugRef.current.position.y = MathUtils.damp(plugRef.current.position.y, 0.7 + target, 6, dt);
+  useEffect(() => {
+    if (!width || !height) return;
+    const tanHalf = Math.tan(MathUtils.degToRad(CAMERA_FOV / 2));
+    const fitHeight = 1.8 / tanHalf;
+    // wide enough for the cartridges once they are pulled out (Explode)
+    const fitWidth = 1.65 / (tanHalf * (width / height));
+    camera.position.copy(VIEW_DIR).multiplyScalar(Math.max(fitHeight, fitWidth)).add(VIEW_TARGET);
+    camera.lookAt(VIEW_TARGET);
+    const controls = controlsRef.current;
+    if (controls) {
+      controls.target.copy(VIEW_TARGET);
+      controls.update();
+      controls.saveState();
     }
-    if (bodyRef.current) {
-      const target = exploded ? 0.3 : 0;
-      bodyRef.current.position.z = MathUtils.damp(bodyRef.current.position.z, target, 6, dt);
-    }
-    if (dinRef.current) {
-      const target = exploded ? -0.6 : 0;
-      dinRef.current.position.y = MathUtils.damp(dinRef.current.position.y, -1.65 + target, 6, dt);
-    }
-    if (surgeRef.current && surging) {
-      surgeRef.current.position.y = ((Date.now() / 200) % 4) - 2;
-    }
-  });
+  }, [camera, width, height, controlsRef]);
 
-  const accent = (id: HotspotId, base: string) =>
-    activeHotspot === id ? "#ED1C24" : base;
-
-  return (
-    <group ref={groupRef}>
-      {/* Surge bolt animation */}
-      {surging && (
-        <group ref={surgeRef}>
-          <mesh position={[-0.55, 0, 0.5]}>
-            <boxGeometry args={[0.05, 0.4, 0.05]} />
-            <meshStandardMaterial color="#FFD23F" emissive="#FFD23F" emissiveIntensity={2} />
-          </mesh>
-        </group>
-      )}
-
-      {/* Module body */}
-      <group ref={bodyRef}>
-        <mesh
-          castShadow
-          receiveShadow
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("body");
-          }}
-        >
-          <boxGeometry args={[1.1, 2.6, 0.8]} />
-          <meshStandardMaterial
-            color={accent("body", "#F5F5F2")}
-            roughness={0.55}
-            metalness={0.05}
-          />
-        </mesh>
-
-        {/* Front label inset */}
-        <mesh position={[0, 0, 0.405]}>
-          <planeGeometry args={[0.9, 1.4]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.9} />
-        </mesh>
-
-        {/* Status indicator window */}
-        <mesh
-          position={[0.3, 0.35, 0.41]}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("status");
-          }}
-        >
-          <boxGeometry args={[0.18, 0.18, 0.04]} />
-          <meshStandardMaterial
-            color={accent("status", "#2BD46B")}
-            emissive={accent("status", "#2BD46B")}
-            emissiveIntensity={activeHotspot === "status" ? 0.9 : 0.4}
-          />
-        </mesh>
-
-        {/* Brand stripe */}
-        <mesh position={[0, -0.95, 0.41]}>
-          <planeGeometry args={[0.9, 0.16]} />
-          <meshStandardMaterial color="#ED1C24" emissive="#ED1C24" emissiveIntensity={0.2} />
-        </mesh>
-
-        {/* Top terminal cavity */}
-        <mesh
-          position={[0, 1.45, 0.2]}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("terminal-top");
-          }}
-        >
-          <boxGeometry args={[0.9, 0.28, 0.4]} />
-          <meshStandardMaterial color={accent("terminal-top", "#3a3a3a")} metalness={0.7} roughness={0.3} />
-        </mesh>
-        {/* Top terminal screws */}
-        {[-0.3, 0.3].map((x) => (
-          <mesh key={`tt${x}`} position={[x, 1.45, 0.45]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.05, 24]} />
-            <meshStandardMaterial color="#c0c0c0" metalness={0.9} roughness={0.2} />
-          </mesh>
-        ))}
-
-        {/* Bottom terminal */}
-        <mesh
-          position={[0, -1.45, 0.2]}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("terminal-bottom");
-          }}
-        >
-          <boxGeometry args={[0.9, 0.28, 0.4]} />
-          <meshStandardMaterial color={accent("terminal-bottom", "#3a3a3a")} metalness={0.7} roughness={0.3} />
-        </mesh>
-        {[-0.3, 0.3].map((x) => (
-          <mesh key={`bb${x}`} position={[x, -1.45, 0.45]}>
-            <cylinderGeometry args={[0.08, 0.08, 0.05, 24]} />
-            <meshStandardMaterial color="#c0c0c0" metalness={0.9} roughness={0.2} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Plug-in cartridge (slides up when exploded) */}
-      <group ref={plugRef} position={[0, 0.7, 0]}>
-        <mesh
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("plug");
-          }}
-          castShadow
-        >
-          <boxGeometry args={[0.95, 0.8, 0.7]} />
-          <meshStandardMaterial
-            color={accent("plug", "#E8E6E0")}
-            roughness={0.5}
-          />
-        </mesh>
-        {/* cartridge tab */}
-        <mesh position={[0, 0.5, 0]}>
-          <boxGeometry args={[0.3, 0.12, 0.5]} />
-          <meshStandardMaterial color="#ED1C24" roughness={0.4} />
-        </mesh>
-      </group>
-
-      {/* DIN rail */}
-      <group ref={dinRef}>
-        <mesh position={[0, -1.65, -0.3]} receiveShadow>
-          <boxGeometry args={[3.2, 0.35, 0.08]} />
-          <meshStandardMaterial color="#9ea2a8" metalness={0.85} roughness={0.35} />
-        </mesh>
-        <mesh
-          position={[0, -1.65, -0.2]}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onHotspot("din-rail");
-          }}
-        >
-          <boxGeometry args={[1.05, 0.18, 0.2]} />
-          <meshStandardMaterial color={accent("din-rail", "#888c92")} metalness={0.7} roughness={0.4} />
-        </mesh>
-      </group>
-
-      {/* Hotspot pins */}
-      {HOTSPOTS.map((h) => (
-        <Html
-          key={h.id}
-          position={h.position}
-          center
-          distanceFactor={6}
-          zIndexRange={[10, 0]}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onHotspot(h.id);
-            }}
-            className={`group relative flex items-center justify-center rounded-full transition-all ${
-              activeHotspot === h.id
-                ? "h-5 w-5 bg-primary shadow-glow"
-                : "h-3.5 w-3.5 bg-white border-2 border-primary"
-            }`}
-            aria-label={h.label}
-          >
-            <span
-              className={`absolute inset-0 rounded-full bg-primary/40 ${
-                activeHotspot === h.id ? "animate-ping" : ""
-              }`}
-            />
-            {/* Hover tooltip — preview only, no AI call */}
-            <span className="pointer-events-none absolute left-5 top-1/2 z-20 w-56 -translate-y-1/2 rounded-lg border border-border bg-card/95 px-3 py-2 text-left opacity-0 shadow-elegant backdrop-blur transition-opacity duration-150 group-hover:opacity-100">
-              <span className="block text-[11px] font-semibold text-foreground">
-                {h.label}
-              </span>
-              <span className="mt-1 block text-[10px] leading-snug text-muted-foreground">
-                {h.summary}
-              </span>
-            </span>
-          </button>
-        </Html>
-      ))}
-    </group>
-  );
+  return null;
 }
 
 export function ProductViewer({
@@ -264,14 +79,16 @@ export function ProductViewer({
     >
       <Canvas
         shadows
-        camera={{ position: [3, 1.5, 4.5], fov: 35 }}
+        camera={{ position: [3, 1.5, 4.5], fov: CAMERA_FOV }}
         dpr={[1, 2]}
         className="!h-full !w-full"
       >
         <color attach="background" args={["#fafaf7"]} />
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[5, 8, 5]} intensity={1.1} castShadow />
+        <ambientLight intensity={0.45} />
+        <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow />
         <directionalLight position={[-4, 3, -2]} intensity={0.35} color="#ffd8d8" />
+        {/* rim light so the grey housing separates from the pale background */}
+        <directionalLight position={[0, 4, -6]} intensity={0.5} />
         <Suspense fallback={null}>
           <SPDModel
             activeHotspot={activeHotspot}
@@ -280,28 +97,55 @@ export function ProductViewer({
             surging={surging}
           />
           <ContactShadows
-            position={[0, -1.95, 0]}
-            opacity={0.35}
+            position={[0, SPD_FLOOR_Y, 0]}
+            opacity={0.4}
             scale={8}
-            blur={2.4}
+            blur={2.2}
             far={3}
           />
         </Suspense>
-        {/* Own Suspense + boundary: the model shows at once; lighting joins when (and if) it loads. */}
-        <LightingBoundary>
-          <Suspense fallback={null}>
-            <Environment preset="studio" />
-          </Suspense>
-        </LightingBoundary>
+        {/* Studio softboxes rendered into the environment map on the spot. The old preset fetched
+            an HDR from a public CDN, so the module came out flat and dark until it arrived —
+            or for good, offline or behind a corporate firewall. */}
+        <Environment resolution={256}>
+          <Lightformer intensity={4.5} position={[0, 4, 4]} scale={[8, 3, 1]} target={[0, 0, 0]} />
+          <Lightformer intensity={2} position={[0, 6, 0]} scale={[8, 8, 1]} target={[0, 0, 0]} />
+          <Lightformer
+            intensity={2.5}
+            position={[-5, 1.5, 2]}
+            scale={[6, 2, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            intensity={2.5}
+            position={[5, 1.5, 2]}
+            scale={[6, 2, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            intensity={1.6}
+            position={[0, 2, -6]}
+            scale={[10, 4, 1]}
+            target={[0, 0, 0]}
+          />
+          <Lightformer
+            form="ring"
+            intensity={1.6}
+            position={[0, -4, 2]}
+            scale={3}
+            target={[0, 0, 0]}
+          />
+        </Environment>
         <OrbitControls
           ref={controlsRef}
           autoRotate={autoRotate}
           autoRotateSpeed={1.2}
           enablePan={true}
-          minDistance={3}
-          maxDistance={9}
-          target={[0, 0, 0]}
+          minDistance={1.8}
+          maxDistance={12}
+          target={VIEW_TARGET}
         />
+        <FrameModel controlsRef={controlsRef} />
       </Canvas>
 
       {/* Top-left chrome */}

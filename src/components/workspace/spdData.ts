@@ -20,7 +20,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "status",
     label: "Status Indicator",
-    position: [0.55, 0.35, 0.41],
+    position: [0.267, -0.099, 0.927],
     title: "Status Indicator Window",
     summary:
       "Mechanical flag that turns from green to red when the internal MOV has reached end-of-life and the SPD module must be replaced.",
@@ -38,7 +38,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "terminal-top",
     label: "Line Terminals (Top)",
-    position: [-0.55, 1.45, 0.41],
+    position: [0.267, 0.96, 0.555],
     title: "Line-Side Terminals",
     summary:
       "Upstream connection to the incoming line. Tight torque and short leads are critical for low let-through voltage.",
@@ -56,7 +56,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "terminal-bottom",
     label: "Earth Terminal",
-    position: [-0.55, -1.45, 0.41],
+    position: [-0.267, -0.96, 0.555],
     title: "Earth (PE) Terminal",
     summary:
       "Discharges surge current to earth. The PE conductor must be straight, short, and at least equal in cross-section to the line conductors.",
@@ -74,7 +74,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "plug",
     label: "Plug-in Cartridge",
-    position: [0.55, 1.1, 0.41],
+    position: [-0.267, 0.427, 1.036],
     title: "Plug-in MOV Cartridge",
     summary:
       "Field-replaceable module containing the metal-oxide varistor. Replace when the status indicator turns red — no need to de-wire the base.",
@@ -92,7 +92,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "body",
     label: "Module Body",
-    position: [0, 0, 0.42],
+    position: [0.535, 0.24, -0.3],
     title: "SPD Module Body",
     summary:
       "Self-extinguishing thermoplastic enclosure housing the MOV, thermal disconnector, and internal fuse. Designed for DIN-rail mounting in distribution boards.",
@@ -110,7 +110,7 @@ export const HOTSPOTS: Hotspot[] = [
   {
     id: "din-rail",
     label: "DIN Rail Clip",
-    position: [0, -1.8, 0.05],
+    position: [1.35, 0.45, -0.99],
     title: "DIN Rail Clip",
     summary:
       "Spring-loaded clip on the rear of the module that snaps onto a standard 35 mm DIN rail inside the distribution board.",
