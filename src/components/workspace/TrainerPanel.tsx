@@ -544,13 +544,26 @@ export function TrainerPanel({ activeHotspot, surging, onSuggest, onSimulate, re
               placeholder={listening ? "Listening…" : "Ask about Legrand SPDs…"}
               className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
             />
-            <button
-              type="submit"
-              disabled={!input.trim() || busy}
-              className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </button>
+            {/* While the trainer talks, Send becomes Stop — the stage's own Stop chip is easy to miss. */}
+            {speaking ? (
+              <button
+                type="button"
+                onClick={lip.stop}
+                aria-label="Stop speaking"
+                title="Stop speaking"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground shadow-glow"
+              >
+                <Square className="h-3 w-3 fill-current" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim() || busy}
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary text-primary-foreground shadow-glow disabled:opacity-40"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            )}
           </form>
           {micNote ? (
             <div role="status" className="mt-2 text-center text-[10.5px] text-warning">
