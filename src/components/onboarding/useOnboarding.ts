@@ -21,9 +21,10 @@ function writeSeen() {
 }
 
 /**
- * Drives the first-run flow: splash → intro → guided tour → app.
- * Returning users only see a short splash. The phase always starts at
- * "splash" so server and client render the same markup (no hydration flash).
+ * Drives the onboarding layers: a short splash, then straight into the app.
+ * The intro and guided tour never open by themselves — only from the header
+ * Guide button. The phase always starts at "splash" so server and client
+ * render the same markup (no hydration flash).
  */
 export function useOnboarding() {
   const [phase, setPhase] = useState<OnboardingPhase>("splash");
@@ -33,9 +34,7 @@ export function useOnboarding() {
     setFirstVisit(!readSeen());
   }, []);
 
-  const finishSplash = useCallback(() => {
-    setPhase(readSeen() ? "done" : "intro");
-  }, []);
+  const finishSplash = useCallback(() => setPhase("done"), []);
 
   const startTour = useCallback(() => setPhase("tour"), []);
 

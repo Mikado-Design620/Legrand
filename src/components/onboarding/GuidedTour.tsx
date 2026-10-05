@@ -121,7 +121,9 @@ export function GuidedTour({ onFinish }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onFinish();
-      else if (e.key === "ArrowRight" || e.key === "Enter") next();
+      else if (e.key === "ArrowRight") next();
+      // A focused button already turns Enter into its own click; advancing here too skipped a step.
+      else if (e.key === "Enter" && !(e.target instanceof HTMLButtonElement)) next();
       else if (e.key === "ArrowLeft") back();
     };
     window.addEventListener("keydown", onKey);
