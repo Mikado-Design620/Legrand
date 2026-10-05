@@ -1,0 +1,215 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-glass: var(--surface-glass);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-glow: var(--primary-glow);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-foreground: var(--brand-blue-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* Legrand light theme — clean white with signature red */
+  --background: #FFFFFF;
+  --foreground: #212529;
+
+  --surface: oklch(0.985 0.003 60);
+  --surface-elevated: oklch(1 0 0);
+  --surface-glass: oklch(1 0 0 / 0.7);
+
+  --card: oklch(1 0 0);
+  --card-foreground: #212529;
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: #212529;
+
+  /* Legrand red — exact value from legrand.co.in brand block */
+  --primary: #ED1C24;
+  --primary-foreground: oklch(1 0 0);
+  --primary-glow: #FF4D53;
+
+  /* Legrand slate blue — legrand.co.in CTA buttons ("Shop online", "Explore") */
+  --brand-blue: #486898;
+  --brand-blue-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.96 0.005 60);
+  --secondary-foreground: oklch(0.20 0.01 50);
+
+  --muted: oklch(0.96 0.004 60);
+  --muted-foreground: oklch(0.48 0.01 50);
+
+  /* Charcoal accent — legrand.co.in body text / outline buttons */
+  --accent: #383636;
+  --accent-foreground: oklch(1 0 0);
+
+  --destructive: #ED1C24;
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.62 0.16 150);
+  --warning: oklch(0.72 0.16 75);
+
+  --border: oklch(0.91 0.004 60);
+  --border-strong: oklch(0.82 0.006 60);
+  --input: oklch(0.96 0.004 60);
+  --ring: #ED1C24;
+
+  --gradient-primary: linear-gradient(135deg, #ED1C24, #ED1C24);
+  --gradient-agent: radial-gradient(circle at 30% 30%, #FF6B70, #ED1C24 55%, #8A0E13 100%);
+  --gradient-surface: linear-gradient(180deg, oklch(0.99 0.003 60), oklch(0.965 0.004 60));
+  --gradient-glow: radial-gradient(circle, oklch(from #ED1C24 l c h / 0.18), transparent 70%);
+
+  --shadow-elegant: 0 20px 60px -25px oklch(0.40 0.10 30 / 0.25);
+  --shadow-glow: 0 0 60px oklch(from #ED1C24 l c h / 0.22);
+  --shadow-inset: inset 0 1px 0 oklch(1 0 0 / 0.8);
+
+  --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html, body, #root { height: 100%; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse at top left, oklch(from #ED1C24 l c h / 0.06), transparent 55%),
+      radial-gradient(ellipse at bottom right, oklch(from #486898 l c h / 0.06), transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .bg-gradient-primary { background-image: var(--gradient-primary); }
+  .bg-gradient-agent { background-image: var(--gradient-agent); }
+  .bg-gradient-surface { background-image: var(--gradient-surface); }
+  .shadow-elegant { box-shadow: var(--shadow-elegant); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .glass {
+    background: oklch(1 0 0 / 0.75);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid oklch(0.91 0.004 60);
+  }
+  .text-balance { text-wrap: balance; }
+}
+
+/* ---------- Agent orb animations ---------- */
+@keyframes orb-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50%      { transform: scale(1.04); opacity: 1; }
+}
+@keyframes orb-think {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg); }
+  50%      { transform: scale(1.06) rotate(180deg); filter: hue-rotate(15deg); }
+}
+@keyframes orb-speak {
+  0%, 100% { transform: scale(1); }
+  25%      { transform: scale(1.05); }
+  50%      { transform: scale(0.97); }
+  75%      { transform: scale(1.03); }
+}
+@keyframes ring-expand {
+  0%   { transform: scale(0.9); opacity: 0.6; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+.animate-orb-pulse  { animation: orb-pulse 3.5s ease-in-out infinite; }
+.animate-orb-think  { animation: orb-think 2.4s ease-in-out infinite; }
+.animate-orb-speak  { animation: orb-speak 0.6s ease-in-out infinite; }
+.animate-ring       { animation: ring-expand 2.4s ease-out infinite; }
+.animate-wave       { animation: wave-bar 1s ease-in-out infinite; transform-origin: center; }
+.animate-fade-up    { animation: fade-up 0.4s var(--transition-smooth) both; }
+.animate-cursor     { animation: cursor-blink 1s steps(2) infinite; }
+
+/* ---------- Onboarding ---------- */
+@keyframes splash-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes splash-progress {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.splash-in       { animation: splash-in 0.7s var(--transition-smooth) both; }
+.splash-progress { transform-origin: left; animation: splash-progress 2s cubic-bezier(0.4, 0, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .splash-in, .splash-progress, .animate-fade-up { animation: none; }
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    90deg,
+    oklch(0.48 0.01 50) 0%,
+    #ED1C24 50%,
+    oklch(0.48 0.01 50) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Custom scrollbar */
+.scroll-area::-webkit-scrollbar { width: 8px; }
+.scroll-area::-webkit-scrollbar-track { background: transparent; }
+.scroll-area::-webkit-scrollbar-thumb {
+  background: oklch(0.85 0.005 60);
+  border-radius: 8px;
+}
+.scroll-area::-webkit-scrollbar-thumb:hover { background: oklch(0.75 0.006 60); }
